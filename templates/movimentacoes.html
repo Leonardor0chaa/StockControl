@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>StockControl — Movimentação de Estoque</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <h2>⬡ StockControl</h2>
+        <p class="menu-label">GERENCIAMENTO</p>
+
+        <nav>
+            <a href="#">Início</a>
+            <a href="{{ url_for('produtos') }}">Produtos</a>
+            <a href="#">Categorias</a>
+            <a class="ativo" href="{{ url_for('movimentacoes') }}">
+                Movimentações
+            </a>
+            <a href="#">Estoque</a>
+        </nav>
+
+        <p class="rodape-menu">
+            Sistema de Gerenciamento de Estoque
+        </p>
+    </aside>
+
+    <main class="conteudo">
+        <header>
+            <div>
+                <h1>Movimentação de Estoque</h1>
+                <p>Registre entradas e saídas de produtos</p>
+            </div>
+            <span>Administrador Teste</span>
+        </header>
+
+        {% with mensagens = get_flashed_messages(with_categories=true) %}
+            {% for categoria, mensagem in mensagens %}
+                <div class="alerta {{ categoria }}">
+                    {{ mensagem }}
+                </div>
+            {% endfor %}
+        {% endwith %}
+
+        <section class="cartao">
+            <h3>Nova Movimentação</h3>
+
+            <form method="POST" action="{{ url_for('movimentacoes') }}">
+                <div class="form-grid">
+
+                    <label>Produto *
+                        <select name="produto_id" id="produto" required>
+                            <option value="">Selecione um produto</option>
+                            {% for p in produtos %}
+                                <option value="{{ p.id }}"
+                                        data-estoque="{{ p.quantidadeEstoque }}">
+                                    {{ p.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </label>
+
+                    <label>Tipo de Movimentação *
+                        <select name="tipo" required>
+                            <option value="">Selecione</option>
+                            <option value="ENTRADA">ENTRADA</option>
+                            <option value="SAIDA">SAÍDA</option>
+                        </select>
+                    </label>
+
+                    <label>Estoque Atual
+                        <input id="estoqueAtual" type="text"
+                               value="Selecione um produto" readonly>
+                    </label>
+
+                    <label>Quantidade *
+                        <input name="quantidade" type="number"
+                               min="1" step="1" required
+                               placeholder="Informe a quantidade">
+                    </label>
+
+                    <label>Data e Hora
+                        <input type="text"
+                               value="Preenchimento automático" readonly>
+                    </label>
+
+                    <label>Usuário Responsável
+                        <input type="text"
+                               value="Administrador Teste" readonly>
+                    </label>
+
+                    <label>Observação
+                        <textarea name="observacao" maxlength="255"
+                                  placeholder="Observação opcional"></textarea>
+                    </label>
+
+                </div>
+
+                <div class="acoes">
+                    <button type="reset" class="secundario">
+                        Cancelar
+                    </button>
+                    <button type="submit">
+                        Registrar Movimentação
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <section class="cartao">
+            <h3>Histórico de Movimentações</h3>
+
+            <div class="tabela-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Produto</th>
+                            <th>Tipo</th>
+                            <th>Quantidade</th>
+                            <th>Responsável</th>
+                            <th>Observação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for m in historico %}
+                        <tr>
+                            <td>{{ m.data.strftime('%d/%m/%Y %H:%M') }}</td>
+                            <td>{{ m.produto }}</td>
+                            <td>
+                                {% if m.tipo == 'ENTRADA' %}
+                                    <span class="status normal">ENTRADA</span>
+                                {% else %}
+                                    <span class="status baixo">SAÍDA</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ m.quantidade }}</td>
+                            <td>{{ m.responsavel }}</td>
+                            <td>{{ m.observacao or '-' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6">
+                                Nenhuma movimentação registrada.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+const produto = document.getElementById("produto");
+const estoqueAtual = document.getElementById("estoqueAtual");
+
+function atualizarEstoque() {
+    const opcao = produto.options[produto.selectedIndex];
+    const estoque = opcao.dataset.estoque;
+
+    estoqueAtual.value = estoque !== undefined
+        ? estoque + " unidades"
+        : "Selecione um produto";
+}
+
+produto.addEventListener("change", atualizarEstoque);
+
+document.querySelector("form").addEventListener("reset", () => {
+    setTimeout(atualizarEstoque, 0);
+});
+</script>
+</body>
+</html>
